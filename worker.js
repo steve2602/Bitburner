@@ -49,7 +49,8 @@ export async function main(ns) {
 		var hThreads = fetchHackThreads(ns, target);
 		var w1Threads = fetchWeakenThreads(ns.hackAnalyzeSecurity(hThreads));
 		var gThreads = fetchGrowThreads(ns, target);
-		var w2Threads = fetchWeakenThreads(ns.growthAnalyzeSecurity(gThreads));
+		var growth = fetchWeakenThreads(ns.growthAnalyzeSecurity(gThreads));
+		var w2Threads = Math.round(growth + 0.5);
 
 		let totalRam = hRam * hThreads + gRam * gThreads + (w1Threads + w2Threads) * wRam;
 		if (totalRam > workerRam) {
@@ -106,8 +107,11 @@ async function makeTargetSoft(ns, target, worker) {
 
 // run grow against the target until it's reached it's max money
 async function fillThatBitchUp(ns, target, worker) {
-	var maxMoney = ns.getServerMaxMoney(target);
-	var threads = Math.ceil(ns.growthAnalyze(target, maxMoney / ns.getServerMoneyAvailable(target)));
+	var maxMoney = Math.ceil(ns.getServerMaxMoney(target));
+	var servermoney = Math.ceil(ns.getServerMoneyAvailable(target))
+	var softthreads = ns.growthAnalyze(target, maxMoney)
+	var hardthreads = Math.round(softthreads / servermoney)
+	var threads = Math.ceil(hardthreads + 0.5);
 	ns.print("Growing for " + threads + " threads.");
 
 	//Weaken if over secTreshold as not to make the grow take forever
@@ -156,7 +160,7 @@ function fetchHackThreads(ns, target) {
 function fetchGrowThreads(ns, target) {
 	// 0.5 added as safety measure
 	let outcome = ns.growthAnalyze(target, (100 / (100 - stealPercentage)));
-	let threadCount = Math.ceil(outcome + 0.5)  
+	let threadCount = Math.round(outcome + 0.5)  
 	return threadCount;
 }
 
